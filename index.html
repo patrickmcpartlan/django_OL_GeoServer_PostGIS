@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="en">
+  <head> 
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/css/ol.css" type="text/css">
+    <link rel="stylesheet" href="/static/lib/openlayers-6.14.1/examples/resources/layout.css" type="text/css">
+
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.14.1/build/ol.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.8.3/dist/ol-layerswitcher.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/css/style.css" type="text/css">
+
+    <style>
+    html,
+body {
+    height: 100%;
+    padding: 20;
+    margin: 0;
+    font-family: arial;
+
+}
+#legend {
+    z-index: 11;
+    padding: 2px 4px;
+    border: 1px solid grey;
+    position: fixed;
+    bottom: 0%;
+    height: 30%;
+    overflow: scroll;
+    width:13%; 
+    right:0%;
+    background-color: #ffffff;
+    font-weight: bold;
+}
+
+#select_feature {
+    position: absolute;
+    z-index: 500;
+    top: 1%;
+    left: 10%;
+
+}
+
+#create_feature {
+    position: absolute;
+    z-index: 500;
+    top: 1%;
+    left: 18%;
+}
+
+#modify_feature {
+    position: absolute;
+    z-index: 500;
+    top: 1%;
+    left: 26%;
+}
+
+#delete_feature {
+    position: absolute;
+    z-index: 500;
+    top: 1%;
+    left: 34%;
+}
+
+
+#toggle_editing {
+    position: absolute;
+    z-index: 500;
+    top: 1%;
+    left: 55%;
+}
+
+#get_info {
+    position: absolute;
+    z-index: 500;
+    top: 1%;
+    left: 70%;
+
+}
+
+#map {
+    position: absolute;
+    top: 10%;
+    bottom: 0%;
+    left: 0%;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+    border: 0.5px solid #4CAF50;
+
+}
+
+.ol-popup {
+    position: absolute;
+    background-color: white;
+    -webkit-filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #cccccc;
+    bottom: 12px;
+    left: -50px;
+    min-width: 280px;
+}
+
+.ol-popup:after,
+.ol-popup:before {
+    top: 100%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+.ol-popup:after {
+    border-top-color: white;
+    border-width: 10px;
+    left: 48px;
+    margin-left: -10px;
+}
+
+.ol-popup:before {
+    border-top-color: #cccccc;
+    border-width: 11px;
+    left: 48px;
+    margin-left: -11px;
+}
+
+.ol-popup-closer {
+    text-decoration: none;
+    position: absolute;
+    top: 2px;
+    right: 8px;
+}
+
+.ol-popup-closer:after {
+    content: "X";
+}
+
+.ol-mouse-position {
+    background-color: #ffffff;
+}
+
+.ol-full-screen {
+    top: 22.643em;
+    left: .5em;
+    right: unset;
+    background: none;
+    position: fixed;
+  }
+
+  .ol-overviewmap {
+    left: .5em;
+    bottom: .5em;
+    position: fixed;
+  }
+
+  .ol-zoom-extent {
+      position: fixed;
+  }
+
+  .ol-zoom-extent {
+    position: fixed;
+    top: 30.643em;
+    left: .5em;
+    background: none;
+  }
+
+  #btnCrosshair {
+    z-index: 2000;
+    position: absolute;
+    background-color: blue;
+    width: 80px;
+    height: 40px;
+    right: 0px;
+    bottom: 400px;
+    border: none;
+    color: gray;
+}
+#btnCrosshair.clicked {
+    color: red;
+}
+    </style>
+  </head>
+  <body>
+
+
+    <div id="map">
+     
+	    <!-- <div id = "legend">
+        <img src="http://localhost:8080/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=sesc_projects:nwi_reducedWGS&STYLE=polygon_hatchingfill">
+      </div> -->
+      <div id="legend">
+        <h3>Legend</h3>
+        <style>
+          img {
+            float: left;
+          }
+        </style>
+        <div><img src="http://localhost:8080/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=sesc_projects:ProblemArea&STYLE=redbox"> <h6>Previous Visits Results
+        </h6>
+          <img src="http://localhost:8080/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=sesc_projects:nwi_reducedWGS&STYLE=polygon_hatchingfill"> <h6>Wetlands</h6>
+          <img src="http://localhost:8080/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=sesc_projects:Office&STYLE=PointLocation"> <h6>Office</h6>
+        </div>
+      </div>
+
+      <button id="btnCrosshair" title="Live Location"> Location
+        <i class="fa fa-crosshairs fa-2x"></i>
+      </button>
+
+        <!-- <button onclick="get_info()" id="get_info">Get Feature-Info</button> -->
+        <button onclick="get_info()" id="get_info"></button>
+
+        <button onclick="select_feature()" id="select_feature" disabled = "true">Select</button>
+        <button onclick="create_feature()" id="create_feature" disabled = "true">Create</button>
+        <button onclick="modify_feature()" id="modify_feature" disabled = "true">Modify </button>
+        <button onclick="delete_feature()" id="delete_feature" disabled = "true">Delete feature</button>
+
+
+        <button onclick="toggle_editing()" id="toggle_editing">Toggle Editing</button>
+        
+    </div>
+    <div id="popup" class="ol-popup">
+        <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+        <div id="popup-content"></div>
+    </div>
+    <div id="info">&nbsp;</div>
+    <script src="https://unpkg.com/ol-layerswitcher@3.8.3"></script>
+
+    <script type="text/javascript">
+    ol.ProxyHost = "/cgi-bin/proxy.cgi?url=";
+
+var draw_add, modify, snap_edit, inspector, SEVERITY, NOTES, INSPECTOR, feature, myFeature, content1, map, geojson;
+  var del_fits = new Array();
+var container = document.getElementById('popup');
+var content = document.getElementById('popup-content');
+var closer = document.getElementById('popup-closer');
+
+/**
+ * Create an overlay to anchor the popup to the map.
+ */
+ var overlay = new ol.Overlay({
+    element: container,
+    autoPan: true,
+    autoPanAnimation: {
+        duration: 250
+    }
+});
+
+/**
+ * Add a click handler to hide the popup.
+ * @return {boolean} Don't follow the href.
+ */
+ closer.onclick = function() {
+    overlay.setPosition(undefined);
+    closer.blur();
+    return false;
+};
+
+var view = new ol.View({
+    projection: 'EPSG:4326',
+    center: [-88.3190576234583, 41.8641283502146],
+    zoom: 14,
+
+});
+var view_ov = new ol.View({
+    projection: 'EPSG:4326',
+    center: [-103, 39],
+    zoom: 5,
+});
+
+
+var base_maps = new ol.layer.Group({
+    'title': 'Base maps',
+    layers: [
+        new ol.layer.Tile({
+            title: 'OSM',
+            type: 'base',
+            visible: true,
+            source: new ol.source.OSM()
+        }),
+
+        new ol.layer.Tile({
+            title: 'Satellite',
+            type: 'base',
+            visible: true,
+            source: new ol.source.XYZ({
+                attributions: ['Powered by Esri',
+                    'Source: Esri, DigitalGlobe, GeoEye, Earthstar Geographics, CNES/Airbus DS, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
+                ],
+                attributionsCollapsible: false,
+                url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                maxZoom: 23
+            })
+        })
+    ]
+});
+
+var OSM = new ol.layer.Tile({
+    source: new ol.source.OSM(),
+    type: 'base',
+    title: 'OSM',
+});
+
+var overlays = new ol.layer.Group({
+    'title': 'Overlays',
+    layers: [
+        new ol.layer.Image({
+            title: 'Surveyed Locations',
+            source: new ol.source.ImageWMS({
+                url: 'http://localhost:8080/geoserver/wms',
+                params: {
+                    'LAYERS': 'sesc_projects:ProblemArea'
+                },
+                ratio: 1,
+                serverType: 'geoserver'
+            })
+        }),
+        new ol.layer.Image({
+            title: 'NWI Wetlands',
+            source: new ol.source.ImageWMS({
+                url: 'http://localhost:8080/geoserver/wms',
+                params: {
+                    'LAYERS': 'sesc_projects:nwi_reducedWGS'
+                },
+                ratio: 1,
+                serverType: 'geoserver'
+            })
+        })
+
+
+    ]
+});
+
+
+
+map = new ol.Map({
+    target: 'map',
+    view: view,
+    overlays: [overlay], 
+});
+
+map.addLayer(base_maps);
+
+
+var areaOfInterest = new ol.layer.Tile({
+    title: "AOIs",
+    source: new ol.source.TileWMS({
+        url: 'http://localhost:8080/geoserver/sesc_projects/wms',
+        params: {'LAYERS':'sesc_projects:AOI_Projects', 'TILED': true},
+        serverType: 'geoserver',
+        visible: true
+    })
+});
+map.addLayer(areaOfInterest)
+
+var styleCo = new ol.style.Style({
+    stroke: new ol.style.Stroke({
+        color: '#331606',
+        width: 5
+    })
+});
+
+var kaneCounty = new ol.layer.Tile({
+    title: "Kane County",
+    source: new ol.source.TileWMS({
+        url: 'http://localhost:8080/geoserver/sesc_projects/wms',
+        params: {'LAYERS':'sesc_projects:KaneCounty', 'TILED': true},
+        serverType: 'geoserver',
+        visible: true,
+        style: styleCo,
+    })
+});
+map.addLayer(kaneCounty);
+
+var office = new ol.layer.Tile({
+    title: "KDSWCD Office",
+    source: new ol.source.TileWMS({
+        url: 'http://localhost:8080/geoserver/sesc_projects/wms',
+        params: {'LAYERS':'sesc_projects:Office', 'TILED': true},
+        serverType: 'geoserver',
+        visible: true,
+        style: myStyle,
+    })
+});
+map.addLayer(office);
+
+// var inspectionResults = new ol.layer.Tile({
+//     title: "Inspection Results",
+//     source: new ol.source.TileWMS({
+//         url: 'http://localhost:8080/geoserver/sesc_projects/wms',
+//         params: {'LAYERS':'sesc_projects:AreaOfConcern', 'TILED': true},
+//         serverType: 'geoserver',
+//         visible: true
+//     })
+// });
+// map.addLayer(inspectionResults)
+
+// overlays = new ol.layer.Group({
+//     'title': 'Overlays',
+//     layers: [
+//         new ol.layer.Image({
+//             title: 'population',
+//             // extent: [-180, -90, -180, 90],
+//             source: new ol.source.ImageWMS({
+//                 url: 'http://localhost:8080/geoserver/wms',
+//                 params: {
+//                     'LAYERS': 'topp:states'
+//                 },
+//                 ratio: 1,
+//                 serverType: 'geoserver'
+//             })
+//         })
+
+
+//     ]
+// });
+map.addLayer(overlays);
+
+///Various Map features///
+var mouse_position = new ol.control.MousePosition({
+    undefinedHTML: 'Lat,Lng',
+    projection: 'EPSG:4326',
+    coordinateFormat: function(coordinate) {
+        return ol.coordinate.format(coordinate, '{y}, {x}', 4);
+    }
+});
+map.addControl(mouse_position);
+
+var overview = new ol.control.OverviewMap({
+    view: view_ov,
+    collapseLabel: 'O',
+    label: 'O',
+    layers: [OSM, kaneCounty]
+});
+
+map.addControl(overview);
+
+var full_sc = new ol.control.FullScreen({
+    label: 'F'
+});
+map.addControl(full_sc);
+
+var zoom = new ol.control.Zoom({
+    zoomInLabel: '+',
+    zoomOutLabel: '-'
+});
+map.addControl(zoom);
+
+var slider = new ol.control.ZoomSlider();
+map.addControl(slider);
+
+var zoom_ex = new ol.control.ZoomToExtent({
+    extent: [
+        // -88.3583, 41.8531,
+        // -88.2647, 41.9346
+
+        -88.3726276066895, 41.919989589812995,
+        -88.3224276066895, 41.920189589813,
+    ],
+    label: "H",
+});
+map.addControl(zoom_ex);
+
+var layerSwitcher = new ol.control.LayerSwitcher({
+    activationMode: 'click',
+    startActive: false,
+    tipLabel: 'Layers', // Optional label for button
+    groupSelectStyle: 'children', // Can be 'children' [default], 'group' or 'none'
+    collapseTipLabel: 'Collapse layers',
+});
+map.addControl(layerSwitcher);
+
+
+//  url = "http://localhost:8080/geoserver/sesc_projects/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=sesc_projects%3AAreaOfConcern&maxFeatures=50&outputFormat=application%2Fjson"
+//  url = "http://localhost:8082/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=topp:buildings&outputFormat=application/json"
+ http://localhost:8080/geoserver/sesc_projects/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=sesc_projects%3AProblemArea&maxFeatures=50&outputFormat=application%2Fjson
+ var url2 = "http://localhost:8080/geoserver/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=sesc_projects:ProblemArea&outputFormat=application/json"
+
+
+ //  //point style
+
+ var myStyle = new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: 17,
+      fill: new ol.style.Fill({color: 'green'}),
+      stroke: new ol.style.Stroke({
+        color: [255,0,0], width: 12
+      })
+    })
+  })
+
+  var style = new ol.style.Style({
+    fill: new ol.style.Fill({
+        color: 'rgba(255, 255, 255, 0.1)'
+    }),
+    stroke: new ol.style.Stroke({
+        color: 'rgba(255, 0, 0, 1)',
+        width: 3
+    }),
+
+    image: new ol.style.Circle({
+        radius: 7,
+        fill: new ol.style.Fill({
+            color: '#ffcc33'
+        })
+    })
+});
+
+  geojson = new ol.layer.Vector({
+    title: 'Previous Visits',
+    id: 'ProblemArea',
+    //title: '<h5>' + value_crop+' '+ value_param +' '+ value_seas+' '+value_level+'</h5>',
+    source: new ol.source.Vector({
+        url: url2,
+        format: new ol.format.GeoJSON()
+    }),
+    style: style,
+});
+
+geojson.getSource().on('addfeature', function() {
+    map.getView().fit(
+        geojson.getSource().getExtent(), {
+            duration: 1590,
+            size: map.getSize()
+        }
+    );
+});
+overlays.getLayers().push(geojson);
+
+layerSwitcher.renderPanel();
+
+////////////////Not Sure///////////////////////
+var highlightStyle = new ol.style.Style({
+    fill: new ol.style.Fill({
+        color: 'rgba(255,255,255,0.4)',
+    }),
+    stroke: new ol.style.Stroke({
+        color: '#3399CC',
+        width: 3,
+    }),
+    image: new ol.style.Circle({
+        radius: 10,
+        fill: new ol.style.Fill({
+            color: '#3399CC'
+        })
+    })
+});
+
+var featureOverlay = new ol.layer.Vector({
+    title: 'high',
+    source: new ol.source.Vector(),
+    map: map,
+    style: highlightStyle
+});
+
+layerSwitcher.renderPanel();
+
+//AutoLocation
+var intervalAutolocate;
+var posCurrent;
+var geolocation = new ol.Geolocation({
+    trackingOptions: {
+        enableHighAccuracy: true,
+    },
+    tracking: true,
+    projection: view.getProjection()
+});
+var positionFeature = new ol.Feature();
+positionFeature.setStyle(
+    new ol.style.Style({
+        image: new ol.style.Circle({
+            radius: 6, 
+            fill: new ol.style.Fill({
+                color: '#3399CC',
+            }),
+            stroke: new ol.style.Stroke({
+                color: '#fff',
+                width: 2,
+            }),
+        }),
+    })
+);
+var accuracyFeature = new ol.Feature();
+var currentPositionLayer = new ol.layer.Vector({
+    map: map, 
+    source: new ol.source.Vector({
+        features: [accuracyFeature, positionFeature],
+    }),
+});
+function startAutolocate() {
+    var coordinates = geolocation.getPosition();
+    positionFeature.setGeometry(coordinates ? new ol.geom.Point(coordinates) : null);
+    view.setCenter(coordinates);
+    view.setZoom(16);
+    accuracyFeature.setGeometry(geolocation.getAccuracyGeometry());
+    intervalAutolocate = setInterval(function () {
+        var coordinates = geolocation.getPosition();
+        var accuracy = geolocation.getAccuracyGeometry()
+        positionFeature.setGeometry(coordinates ? new ol.geom.Point(coordinates) : null);
+        map.getView().setCenter(coordinates);
+        view.setZoom(16);
+        accuracyFeature.setGeometry(accuracy);
+    }, 10000);
+}
+function stopAutolocation() {
+    clearInterval(intervalAutolocate);
+    positionFeature.setGeometry(null);
+    accuracyFeature.setGeometry(null);
+};
+//live location
+$("#btnCrosshair").on("click", function (event) {
+    $("#btnCrosshair").toggleClass("clicked");
+    if ($("#btnCrosshair").hasClass("clicked")) {
+        startAutolocate();
+    } else {
+        stopAutolocate();
+    }
+});
+////////////////////////////////////
+
+//Layer Functions//
+
+function toggle_editing() {
+
+    var color = $('#toggle_editing').css("background-color");
+
+   if (color == 'rgb(239, 239, 239)') {
+   
+      document.getElementById("get_info").style.backgroundColor = '';	
+      document.getElementById("toggle_editing").style.backgroundColor = 'coral';
+       document.getElementById("select_feature").style.backgroundColor = '';
+       document.getElementById("create_feature").style.backgroundColor = '';
+       document.getElementById("modify_feature").style.backgroundColor = '';
+       
+       document.getElementById("select_feature").disabled = false;
+       document.getElementById("create_feature").disabled = false;
+       document.getElementById("modify_feature").disabled = false;
+       document.getElementById("delete_feature").disabled = false;
+       
+       document.getElementById("get_info").disabled = true;
+       map.un('singleclick', getinfo);
+       overlay.setPosition(undefined);
+       closer.blur();
+   
+   }
+   
+   else if (color == 'rgb(255, 127, 80)') {
+   
+       document.getElementById("toggle_editing").style.backgroundColor = '';
+       document.getElementById("select_feature").style.backgroundColor = '';
+       document.getElementById("create_feature").style.backgroundColor = '';
+       document.getElementById("modify_feature").style.backgroundColor = '';
+   
+       document.getElementById("select_feature").disabled = true;
+       document.getElementById("create_feature").disabled = true;
+       document.getElementById("modify_feature").disabled = true;
+       document.getElementById("delete_feature").disabled = true;
+       
+       document.getElementById("get_info").disabled = false;
+       
+        if (modify) {
+           map.removeInteraction(modify);
+       }
+       if (draw_add) {
+           map.removeInteraction(draw_add);
+       }
+       if (snap_edit) {
+           map.removeInteraction(snap_edit);
+       }
+       
+       map.un('click', highlight);
+       map.un('click', highlight_mod_attributes);
+       overlay.setPosition(undefined);
+       closer.blur();
+   
+   }
+}
+
+
+function highlight(evt) {
+    if (featureOverlay) {
+        featureOverlay.getSource().clear();
+        map.removeLayer(featureOverlay);
+    }
+    feature = map.forEachFeatureAtPixel(evt.pixel,
+        function(feature, layer) {
+            return feature;
+        });
+
+    if (feature) {
+
+        var geometry = feature.getGeometry();
+        var coord = geometry.getCoordinates();
+        var coordinate = evt.coordinate;
+
+        featureOverlay.getSource().addFeature(feature);
+        var content1 = '<h4>Concern:' + feature.get('SEVERITY') + '</h4>';
+        content1 += '<h5>' + feature.get('NOTES') + '</h5>';
+        content1 += '<h6> Inspector:' + feature.get('INSPECTOR') + '</h6>';
+
+        content.innerHTML = content1;
+        overlay.setPosition(coordinate);
+
+        layerSwitcher.renderPanel();
+        map.updateSize();
+    }
+
+}
+
+
+function highlight_mod_attributes(evt) {
+    if (featureOverlay) {
+        featureOverlay.getSource().clear();
+        map.removeLayer(featureOverlay);
+    }
+    //if (geojson) {geojson.getSource().refresh();}
+    feature = map.forEachFeatureAtPixel(evt.pixel,
+        function(feature, layer) {
+            return feature;
+        });
+
+    if (feature) {
+
+        var geometry = feature.getGeometry();
+        var coord = geometry.getCoordinates();
+        var coordinate = evt.coordinate;
+        //alert(coordinate);
+        featureOverlay.getSource().addFeature(feature);
+        //overlays.getLayers().push(featureOverlay);
+
+
+        content1 = '<label for="SEVERITY">SEVERITY:</label><input type="text" id="SEVERITY" name="SEVERITY" value=' + feature.get('SEVERITY') + '><br><br>';
+        content1 += '<label for="NOTES">NOTES:</label><input type="text" id="NOTES" name="NOTES" value=' + feature.get('NOTES') + '><br><br>';
+        content1 += '<label for="INSPECTOR">INSPECTOR:</label><input type="text" id="INSPECTOR" name="INSPECTOR" value=' + feature.get('INSPECTOR') + '><br><br>';
+        content1 += ' <button onclick="save_mod_features()" id = "save_mod_features">Save Features</button>';
+        content1 += ' <button onclick="cancel_mod_features()" id = "cancel_mod_features">Cancel</button>';
+
+
+        //  alert(feature.getId());
+        content.innerHTML = content1;
+        overlay.setPosition(coordinate);
+
+
+        map.updateSize();
+    }
+}
+
+function select_feature() {
+    document.getElementById("get_info").style.backgroundColor = '';
+    map.un('singleclick', getinfo);
+    overlay.setPosition(undefined);
+    closer.blur();
+
+    document.getElementById("select_feature").style.backgroundColor = 'coral';
+    document.getElementById("create_feature").style.backgroundColor = '';
+    document.getElementById("modify_feature").style.backgroundColor = '';
+
+    if (draw_add) {
+        map.removeInteraction(draw_add);
+    }
+    if (modify) {
+        map.removeInteraction(modify);
+    }
+    if (snap_edit) {
+        map.removeInteraction(snap_edit);
+    }
+    map.on('click', highlight);
+}
+
+function create_feature() {
+    map.un('click', highlight_mod_attributes);
+    map.un('click', highlight);
+    document.getElementById("get_info").style.backgroundColor = '';
+    map.un('singleclick', getinfo);
+    overlay.setPosition(undefined);
+    closer.blur();
+
+    //map.on('click
+    //alert('change');
+    if (modify) {
+        map.removeInteraction(modify);
+    }
+    if (snap_edit) {
+        map.removeInteraction(snap_edit);
+    }
+    document.getElementById("create_feature").style.backgroundColor = 'coral';
+    document.getElementById("modify_feature").style.backgroundColor = '';
+    document.getElementById("select_feature").style.backgroundColor = '';
+
+
+    source_mod = geojson.getSource();
+    draw_add = new ol.interaction.Draw({
+        source: source_mod,
+        type: 'Polygon' 
+    });
+    map.addInteraction(draw_add);
+    //var source_g = geojson.getSource();
+    snap_edit = new ol.interaction.Snap({
+        source: source_mod
+    });
+    map.addInteraction(snap_edit);
+    draw_add.on('drawend',
+        function(e) {
+            //pop = prompt("Enter Population", "");
+            //state_name = prompt("Enter Name", "");
+            //map.on('click', highlight_mod);
+            myFeature = e.feature;
+            if (myFeature) {
+
+                var geometry = myFeature.getGeometry();
+                var coord = geometry.getCoordinates();
+                var extent = geometry.getExtent();
+                var centroid = ol.extent.getCenter(extent);
+                //alert(centroid);
+                //var coordinate = e.coordinate;
+
+                featureOverlay.getSource().addFeature(myFeature);
+                //overlays.getLayers().push(featureOverlay);
+
+
+                content1 = '<label for="SEVERITY">SEVERITY:</label><input type="text" id="SEVERITY" name="SEVERITY" value=' + myFeature.get('SEVERITY') + '><br><br>';
+                content1 += '<label for="NOTES">NOTES:</label><input type="text" id="NOTES" name="NOTES" value=' + myFeature.get('NOTES') + '><br><br>';
+                content1 += '<label for="INSPECTOR">INSPECTOR:</label><input type="text" id="INSPECTOR" name="INSPECTOR" value=' + myFeature.get('INSPECTOR') + '><br><br>';
+                content1 += ' <button onclick="save_created()" id = "save_created">Save Feature</button>';
+                content1 += ' <button onclick="cancel_created()" id = "cancel_created">Delete Feature</button>';
+                
+                content.innerHTML = content1;
+                overlay.setPosition(centroid);
+
+
+
+                //layerSwitcher.renderPanel();
+
+                //alert(feature.get('gid'));
+
+                //  alert(feature.get('gid'));
+
+                //	map.updateSize();
+            }
+            // alert(state_name+''+pupulation);
+
+            // alert('karan');
+            //var features = geojson.getSource().getFeatures();
+            //var length = features.length;
+            // alert(length);
+        }, this);
+
+    geojson.getSource().on('addfeature', function() {
+        var features = geojson.getSource().getFeatures();
+        var length = features.length;
+        // alert(length);
+    });
+
+}
+
+///////Geoserver Specific 
+function save_created() {
+    SEVERITY = document.getElementById("SEVERITY").value;
+    NOTES = document.getElementById("NOTES").value;
+    INSPECTOR = document.getElementById("INSPECTOR").value;
+    var coords = myFeature.getGeometry();
+    
+    var format = new ol.format.GML({
+    });
+    var gml3 = format.writeGeometry(coords, {
+            //dataProjection: 'EPSG:4326',
+            //featureProjection: 'urn:ogc:def:crs:EPSG::4326'
+            //rightHanded: false
+        }
+    );
+    var url1 = 'http://localhost:8080/geoserver/wfs';
+    var method = 'POST';
+    var postData1 =
+        '<wfs:Transaction service="WFS" version="1.0.0"\n' +
+        'xmlns:sesc_projects="http://www.openplans.org/sesc_projects"\n' +
+        'xmlns:ogc="http://www.opengis.net/ogc"\n' +
+        'xmlns:wfs="http://www.opengis.net/wfs"\n' +
+        'xmlns:gml="http://www.opengis.net/gml"\n' +
+        'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n' +
+        'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-transaction.xsd">\n' +
+        '<wfs:Insert>\n' +
+        'sesc_projects:ProblemArea>\n' +
+        '<sesc_projects:geom>\n' +
+        '<gml:coordinates decimal="." cs="," ts=" ">\n'
+        + gml3 + '\n' +
+        '</gml:coordinates decimal>>\n' +
+        '</sesc_projects: geom>>\n' +
+        '<sesc_projects:SEVERITY>' + SEVERITY + '</sesc_projects:SEVERITY>\n' +
+        '<sesc_projects:NOTES>' + NOTES + '</sesc_projects:NOTES>\n' +
+        '<sesc_projects:INSPECTOR>' + INSPECTOR + '</sesc_projects:INSPECTOR>\n' +
+        // '<sesc_projects:INSPECTOR>' + INSPECTOR + '</sesc_projects:INSPECTOR>\n' +
+        '</sesc_projects:ProblemArea>\n' +
+        '</wfs:Insert>\n' +
+        '</wfs:Transaction>\n';
+
+{/* <wfs:Transaction service="WFS" version="1.0.0"
+  xmlns:wfs="http://www.opengis.net/wfs"
+  xmlns:topp="http://www.openplans.org/topp"
+  xmlns:gml="http://www.opengis.net/gml"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/WFS-transaction.xsd http://www.openplans.org/topp http://localhost:8080/geoserver/wfs/DescribeFeatureType?typename=topp:tasmania_roads">
+  <wfs:Insert>
+    <topp:tasmania_roads>
+      <topp:the_geom>
+        <gml:MultiLineString srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">
+          <gml:lineStringMember>
+            <gml:LineString>
+              <gml:coordinates decimal="." cs="," ts=" ">
+494475.71056415,5433016.8189323 494982.70115662,5435041.95096618
+              </gml:coordinates>
+            </gml:LineString>
+          </gml:lineStringMember>
+        </gml:MultiLineString>
+      </topp:the_geom>
+      <topp:TYPE>alley</topp:TYPE>
+    </topp:tasmania_roads>
+  </wfs:Insert>
+</wfs:Transaction> */}
+
+    //alert(postData1);
+    var req1 = new XMLHttpRequest();
+    req1.open("POST", 'http://localhost:8080/geoserver/wfs', false);
+    console.log("connected to designated folder")
+    req1.setRequestHeader('User-Agent', 'XMLHTTP/1.0');
+    // req1.setRequestHeader('User-Agent', '	Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0');
+    req1.setRequestHeader('Content-type', 'text/xml');
+    req1.onreadystatechange = function() {
+        if (req1.readyState != 4) return;
+        if (req1.status != 200 && req1.status != 304) {
+            alert('HTTP error ' + req1.status);
+            return;
+        }
+    }
+    if (req1.readyState == 4) return;
+    req1.send(postData1);
+    //alert(req1.responseText);
+    alert('Feature saved successfully');
+    geojson.getSource().refresh();
+    overlay.setPosition(undefined);
+    console.log("Set position")
+    closer.blur();
+    featureOverlay.getSource().clear();
+}
+
+function cancel_created() {
+
+    featureOverlay.getSource().clear();
+    geojson.getSource().removeFeature(myFeature);
+    overlay.setPosition(undefined);
+    closer.blur();
+
+}
+
+function modify_feature() {
+    //alert('change');
+    document.getElementById("get_info").style.backgroundColor = '';
+    map.un('singleclick', getinfo);
+    map.un('click', highlight);
+    overlay.setPosition(undefined);
+    closer.blur();
+
+    if (draw_add) {
+        map.removeInteraction(draw_add);
+    }
+    if (snap_edit) {
+        map.removeInteraction(snap_edit);
+    }
+
+
+    document.getElementById("select_feature").style.backgroundColor = '';
+    document.getElementById("create_feature").style.backgroundColor = '';
+    document.getElementById("modify_feature").style.backgroundColor = 'coral';
+    source_mod = featureOverlay.getSource();
+    modify = new ol.interaction.Modify({
+        source: source_mod
+    });
+    map.addInteraction(modify);
+
+    var source_g = geojson.getSource();
+    var snap_edit = new ol.interaction.Snap({
+        source: source_g
+    });
+    map.addInteraction(snap_edit);
+    map.on('click', highlight_mod_attributes);
+
+}
+
+function save_mod_features() {
+
+    SEVERITY = document.getElementById("SEVERITY").value;
+    NOTES = document.getElementById("NOTES").value;
+    INSPECTOR = document.getElementById("INSPECTOR").value;
+
+    var feat_mod = featureOverlay.getSource().getFeatures();
+    //alert(del_feat);
+
+    var fid_feat_mod = feat_mod[0].getId();
+
+    var coords = feat_mod[0].getGeometry();
+    //alert(coords.toString());
+    var format = new ol.format.GML({
+        //featureNS: 'http://www.census.gov',
+        //  featurePrefix: 'tiger',
+        // featureType: 'tiger:tiger_roads',
+        srsName: 'urn:ogc:def:crs:EPSG::4326'
+
+    });
+    //var id = mod_features[i].getId();
+
+    var gml3 = format.writeGeometry(coords, {
+        //dataProjection: 'EPSG:4326',
+        featureProjection: 'urn:ogc:def:crs:EPSG::4326',
+        //rightHanded: false
+    });
+    //alert(fid_feat_att);
+    var url1 = 'http://localhost:8080/geoserver/wfs';
+    var method = 'POST';
+    var postData =
+        '<wfs:Transaction service="WFS" version="1.0.0"\n' +
+        'xmlns:sesc_projects="http://www.openplans.org/sesc_projects"\n' +
+        'xmlns:ogc="http://www.opengis.net/ogc"\n' +
+        'xmlns:wfs="http://www.opengis.net/wfs"\n' +
+        'xmlns:gml="http://www.opengis.net/gml"\n' +
+        'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n' +
+        'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/WFS-transaction.xsd">\n' + 
+        '<wfs:Update typeName="sesc_projects:ProblemArea">\n' +
+        '<wfs:Property>\n' +
+        '<wfs:Name>geom</wfs:Name>\n' +
+        '<wfs:Value>\n' +
+        gml3 + '\n' +
+        '</wfs:Value>\n' +
+        '</wfs:Property>\n' +
+        '<wfs:Property>\n' +
+        '<wfs:Name>SEVERITY</wfs:Name>\n' +
+        '<wfs:Value>\n' +
+        SEVERITY + '\n' +
+        '</wfs:Value>\n' +
+        '</wfs:Property>\n' +
+        '<wfs:Property>\n' +
+        '<wfs:Name>NOTES</wfs:Name>\n' +
+        '<wfs:Value>\n' +
+        NOTES + '\n' +
+        '</wfs:Value>\n' +
+        '</wfs:Property>\n' +
+        '<wfs:Name>INSPECTOR</wfs:Name>\n' +
+        '<wfs:Value>\n' +
+        INSPECTOR + '\n' +
+        '</wfs:Value>\n' +
+        '</wfs:Property>\n' +
+        '<ogc:Filter>\n' +
+        '<ogc:FeatureId fid="' + fid_feat_mod + '"/>\n' +
+        '</ogc:Filter>\n' +
+        '</wfs:Update>\n' +
+        '</wfs:Transaction>\n';
+    //alert(postData);
+    var req = new XMLHttpRequest();
+    req.open("POST", url1, false);
+    // req.setRequestHeader('User-Agent', 'XMLHTTP/1.0');
+    req.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0');
+    req.setRequestHeader('Content-type', 'text/xml');
+    req.onreadystatechange = function() {
+        if (req.readyState != 4) return;
+        if (req.status != 200 && req.status != 304) {
+            alert('HTTP error ' + req.status);
+            return;
+        }
+        // req_res[i] = req.responseText;
+
+
+        //alert(req.responseText);
+        //  Ext.MessageBox.alert('Status', 'changes saved successfully');
+    }
+    if (req.readyState == 4) return;
+    req.send(postData);
+
+    alert('Feature updated successfully');
+    geojson.getSource().refresh();
+    overlay.setPosition(undefined);
+    closer.blur();
+    featureOverlay.getSource().clear();
+}
+
+function cancel_mod_features() {
+
+    featureOverlay.getSource().clear();
+    overlay.setPosition(undefined);
+    closer.blur();
+
+}
+
+function delete_feature() {
+
+    del_feat = featureOverlay.getSource().getFeatures();
+    //alert(del_feat);
+
+    var fid_del_feat = del_feat[0].getId();
+    //alert(fid_del_feat);
+
+    if (confirm('Are you sure you want to delete the selected feature?')) {
+        // Save it!
+        if (fid_del_feat == undefined) {
+            featureOverlay.getSource().removeFeature(del_feat[0]);
+            geojson.getSource().removeFeature(feature);
+        } else if (fid_del_feat != undefined) {
+            var feat = geojson.getSource().getFeatureById(fid_del_feat);
+
+            geojson.getSource().removeFeature(feat);
+
+            var feat1 = featureOverlay.getSource().getFeatureById(fid_del_feat);
+            featureOverlay.getSource().removeFeature(feat1);
+            var postData_del =
+                '<wfs:Transaction service="WFS" version="1.0.0"\n' +
+                'xmlns:cdf="http://www.opengis.net/cite/data"\n' +
+                'xmlns:ogc="http://www.opengis.net/ogc"\n' +
+                'xmlns:wfs="http://www.opengis.net/wfs"\n' +
+                'xmlns:sesc_projects="http://www.openplans.org/sesc_projects">\n' +
+                '<wfs:Delete typeName="sesc_projects:ProblemArea">\n' +
+                '<ogc:Filter>\n' +
+                '<ogc:FeatureId fid="' + fid_del_feat + '"/>\n' +
+                '</ogc:Filter>\n' +
+                '</wfs:Delete>\n' +
+                '</wfs:Transaction>\n';
+
+            var req_del = new XMLHttpRequest();
+            req_del.open("POST", 'http://localhost:8080/geoserver/wfs', false);
+            req_del.setRequestHeader('User-Agent', 'XMLHTTP/1.0');
+            // req_del.setRequestHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:99.0) Gecko/20100101 Firefox/99.0');
+            req_del.setRequestHeader('Content-type', 'text/xml');
+            req_del.onreadystatechange = function() {
+                if (req_del.readyState != 4) return;
+                if (req_del.status != 200 && req_del.status != 304) {
+                    alert('HTTP error ' + req_del.status);
+                    return;
+                }
+            }
+            if (req_del.readyState == 4) return;
+            req_del.send(postData_del);
+
+            alert('Feature deleted Successfully');
+            geojson.getSource().refresh();
+            overlay.setPosition(undefined);
+            closer.blur();
+        }
+
+    } else {
+        // Do nothing!
+        alert('Feature not deleted');
+        featureOverlay.getSource().clear();
+        overlay.setPosition(undefined);
+        closer.blur();
+    }
+
+}
+
+function get_info() {
+    
+	
+    featureOverlay.getSource().clear();
+    overlay.setPosition(undefined);
+    closer.blur();
+    var color = $('#get_info').css("background-color");
+
+    if (color == 'rgb(239, 239, 239)') {
+        //alert(color);
+        if (modify) {
+            map.removeInteraction(modify);
+        }
+        if (draw_add) {
+            map.removeInteraction(draw_add);
+        }
+        if (snap_edit) {
+            map.removeInteraction(snap_edit);
+        }
+
+        document.getElementById("get_info").style.backgroundColor = 'coral';
+        document.getElementById("select_feature").style.backgroundColor = '';
+        document.getElementById("create_feature").style.backgroundColor = '';
+        document.getElementById("modify_feature").style.backgroundColor = '';
+        map.un('click', highlight);
+		map.un('click', highlight_mod_attributes);
+        map.on('singleclick', getinfo);
+
+    } else if (color == 'rgb(255, 127, 80)') {
+        //alert(color);
+        document.getElementById("get_info").style.backgroundColor = '';
+        map.un('singleclick', getinfo);
+        overlay.setPosition(undefined);
+        closer.blur();
+        //map.on('click', highlight);
+
+    }
+
+}
+
+
+function getinfo(evt) {
+
+
+    var coordinate = evt.coordinate;
+    var viewResolution = /** @type {number} */ (view.getResolution());
+
+    //alert(coordinate1);
+    $("#popup-content").empty();
+
+    document.getElementById('info').innerHTML = '';
+    var no_layers = overlays.getLayers().get('length');
+    // alert(no_layers);
+    var url = new Array();
+    var wmsSource = new Array();
+    var layer_title = new Array();
+
+
+    var i;
+    for (i = 0; i < no_layers; i++) {
+        //alert(overlays.getLayers().item(i).getVisible());
+        var visibility = overlays.getLayers().item(i).getVisible();
+        //alert(visibility);
+        if (visibility == true) {
+            //alert(i);
+            layer_title[i] = overlays.getLayers().item(i).get('title');
+            // alert(layer_title[i]);
+            wmsSource[i] = new ol.source.ImageWMS({
+                url: 'http://localhost:8080/geoserver/wms',
+                params: {
+                    'LAYERS': layer_title[i]
+                },
+                serverType: 'geoserver',
+                crossOrigin: 'anonymous'
+            });
+            //alert(wmsSource[i]);
+            //var coordinate2 = evt.coordinate;
+            // alert(coordinate);
+            url[i] = wmsSource[i].getFeatureInfoUrl(
+                evt.coordinate, viewResolution, 'EPSG:4326', {
+                    'INFO_FORMAT': 'text/html'
+                });
+            //  alert(url[i]);
+
+            //assuming you use jquery
+            $.get(url[i], function(data) {
+                //alert(i);
+                //append the returned html data
+
+
+                // $("#info").html(data);
+                //document.getElementById('info').innerHTML = data;
+                //document.getElementById('popup-content').innerHTML = '<p>Feature Info</p><code>' + data + '</code>';
+
+                //alert(dat[i]);
+                $("#popup-content").append(data);
+                //document.getElementById('popup-content').innerHTML = '<p>Feature Info</p><code>' + data + '</code>';
+
+                overlay.setPosition(coordinate);
+
+                layerSwitcher.renderPanel();
+
+            });
+            //alert(layer_title[i]);
+            //alert(fid1[0]);
+
+
+
+        }
+    }
+
+
+}
+
+
+
+
+/////From Script//
+
+////////////////
+// var format = new ol.format.WFS({
+//     featureNS:"sesc_projects",
+//     featureType:'ProblemArea',
+//     schemaLocation:"http://www.opengis.net/wfs \
+//     http://schemas.opengis.net/wfs/1.0.0/WFS-transaction.xsd \
+//     http://www.openplans.org/sesc_projects \
+//     http://localhost:8080/geoserver/wfs/DescribeFeatureType?typename=sesc_projects:ProblemArea"});
+// function addInteraction() {
+// draw = new ol.interaction.Draw({
+// features: featureOverlay.getFeatures(),
+// type: /** @type {ol.geom.GeometryType} */ (typeSelect.value)
+
+// });
+// draw.on('drawend', function(evt) {
+// // create a unique id
+// // it is later needed to delete features
+// // give the feature this id
+// var feature = evt.feature;
+// feature.set('geometry', feature.getGeometry()); 
+// var node = format.writeTransaction([feature], null, null, {
+// gmlOptions: {srsName: "EPSG:4326"},
+// featureNS: "sesc_projects",
+// featureType: "ProblemArea"
+
+
+// });
+
+// $.ajax({
+// type: "POST",
+// url: "http://localhost:8080/geoserver/wfs",
+// data: new XMLSerializer().serializeToString(node),
+
+// contentType: 'text/xml',
+// success: function(data) {
+//     var result = format.readTransactionResponse(data);
+//     feature.setId(result.insertIds[0]);
+
+// },
+// error: function(e) {
+//     var errorMsg = e? (e.status + ' ' + e.statusText) : "";
+//     bootbox.alert('Error saving this feature to GeoServer.<br><br>'
+//         + errorMsg);
+// },
+// context: this
+// });
+
+// });
+// map.addInteraction(draw);
+
+// }
+
+    </script>
+
+
+    
+
+  </body>
+</html>
